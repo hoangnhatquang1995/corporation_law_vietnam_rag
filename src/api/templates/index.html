@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='site.css') }}">
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <article class="hero-card">
+                <div class="eyebrow">FastAPI + Gradio + HTML Template</div>
+                <h1>Website hỏi đáp về Luật Doanh Nghiệp Việt Nam</h1>
+                <p>
+                    Trang này là phần vỏ HTML của website. Phần chat được mount bằng Gradio,
+                    nên bạn vẫn có giao diện web rõ ràng mà api.py không cần viết quá nhiều.
+                </p>
+                <div class="hero-actions">
+                    <a class="primary-link" href="#chat-box">Bắt đầu hỏi đáp</a>
+                    <a class="secondary-link" href="{{ gradio_path }}" target="_blank" rel="noreferrer">Mở Gradio riêng</a>
+                </div>
+            </article>
+
+            <aside class="info-card">
+                <div class="eyebrow">Cách hoạt động</div>
+                <ul class="bullet-list">
+                    <li>FastAPI render file template để hiển thị website.</li>
+                    <li>Gradio được mount vào đường dẫn riêng bằng mount_gradio_app.</li>
+                    <li>HTML chỉ cần nhúng iframe là giao diện chat đã nằm trong cùng website.</li>
+                </ul>
+                <div class="status-strip">
+                    <span>Template HTML</span>
+                    <span>Static CSS</span>
+                    <span>Gradio Mounted</span>
+                </div>
+            </aside>
+        </section>
+
+        <section class="frame-card" id="chat-box">
+            <div class="frame-header">
+                <div>
+                    <h2>Khu vực chat</h2>
+                    <p>Đây là Gradio app được nhúng trực tiếp vào trang HTML.</p>
+                </div>
+                <a href="{{ gradio_path }}" target="_blank" rel="noreferrer">Mở riêng Gradio</a>
+            </div>
+
+            <div class="frame-shell">
+                <div class="frame-loading" id="frame-loading">Đang tải giao diện chat...</div>
+                <iframe src="{{ gradio_path }}" title="Gradio App" id="gradio-frame"></iframe>
+            </div>
+        </section>
+    </main>
+    <script src="{{ request.url_for('static', path='site.js') }}"></script>
+</body>
+</html>

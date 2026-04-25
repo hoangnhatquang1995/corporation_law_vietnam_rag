@@ -27,14 +27,20 @@ class VectorStoreDB:
     type : VectorStoreType
     path : Optional[str]
     client : Optional[QdrantClient]
+    timeout : Optional[int]
+    qdrant_batch_size : int
+    qdrant_wait : bool
 
     def __init__(self, type: VectorStoreType, collection_name: Optional[str] = None, embedder: Optional[Embeddings] = None, path: Optional[str] = None):
         self.type = type 
         self.collection_name = collection_name
         self.embedder = embedder
         self.path = path
+        self.timeout = int(os.getenv("QDRANT_TIMEOUT", "120"))
+        self.qdrant_batch_size = int(os.getenv("QDRANT_BATCH_SIZE", "16"))
+        self.qdrant_wait = os.getenv("QDRANT_UPSERT_WAIT", "false").lower() == "true"
         if self.type == VectorStoreType.QDRANT:
-            self.client = QdrantClient(url=QDRANT_URL)
+            self.client = QdrantClient(url=QDRANT_URL, timeout=self.timeout)
         
     def set_embedder(self, embedder: Embeddings):
         self.embedder = embedder
@@ -46,7 +52,7 @@ class VectorStoreDB:
             raise ValueError("[2][ERROR] Tên bộ sưu tập phải được cung cấp để xây dựng vector store.")
         if self.type == VectorStoreType.QDRANT:
             if self.client is None:
-                self.client = QdrantClient(url=QDRANT_URL)
+                self.client = QdrantClient(url=QDRANT_URL, timeout=self.timeout)
             if not self.client.collection_exists(self.collection_name):
                 self.client.recreate_collection(
                     collection_name=self.collection_name,
@@ -71,9 +77,22 @@ class VectorStoreDB:
         else:
             raise ValueError(f"Unsupported vector store type: {self.type}")
                 
-    def add(self, documents: List[Document]):
+    def add(self, documents: List[Document], batch_size: Optional[int] = None, wait: Optional[bool] = None, timeout: Optional[int] = None):
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
+        if self.type == VectorStoreType.QDRANT:
+            resolved_batch_size = self.qdrant_batch_size if batch_size is None else batch_size
+            resolved_wait = self.qdrant_wait if wait is None else wait
+            resolved_timeout = self.timeout if timeout is None else timeout
+
+            # Upsert theo batch nhỏ và không chờ indexing xong để tránh notebook bị ReadTimeout.
+            self.db.add_documents(
+                documents,
+                batch_size=resolved_batch_size,
+                wait=resolved_wait,
+                timeout=resolved_timeout,
+            )
+            return
         self.db.add_documents(documents)
         
     def query(self, query: str, top_k: int = 5) -> List[Document]:
