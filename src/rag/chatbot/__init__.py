@@ -1,2 +1,3 @@
-import system_prompts
+from . import system_prompts
+
 
