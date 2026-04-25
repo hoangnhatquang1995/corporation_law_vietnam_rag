@@ -18,7 +18,7 @@ class LLMProvider :
         OLLAMA = "ollama"
         LM_STUDIO = "lm_studio"
 
-def get_llm_api_key(llm: LLMProvider) -> Callable[[], str]:
+def get_llm_api_key(llm: Union[LLMProvider.Cloud, LLMProvider.Local]) -> Callable[[], str]:
     if llm == LLMProvider.Cloud.GOOGLE_CHAT:
         return lambda: getenv("GOOGLE_API_KEY", "")
     elif llm == LLMProvider.Cloud.OPEN_AI:
@@ -32,7 +32,7 @@ def get_llm_api_key(llm: LLMProvider) -> Callable[[], str]:
     else:
         raise ValueError(f"Unsupported LLM provider: {llm}")
     
-def get_llm_model(llm_provider: LLMProvider, model_name: str) -> BaseChatModel:
+def get_llm_model(llm_provider: Union[LLMProvider.Cloud, LLMProvider.Local], model_name: str) -> BaseChatModel:
     if llm_provider == LLMProvider.Cloud.GOOGLE_CHAT:
         llm = ChatOpenAI(
             model = model_name,
@@ -75,3 +75,4 @@ def get_llm_model(llm_provider: LLMProvider, model_name: str) -> BaseChatModel:
         return llm
     else:
         raise ValueError(f"Unsupported LLM provider: {llm_provider}")
+

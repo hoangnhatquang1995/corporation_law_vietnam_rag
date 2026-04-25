@@ -12,28 +12,34 @@ from datasets import load_dataset
 DATASET_NAME = "vohuutridung/vietnamese-legal-documents"
 
 
-def _build_split(limit: Optional[int] = None) -> str:
-    return "data" if limit is None else f"data[:{limit}]"
+def _build_split(start: Optional[int] = None , limit: Optional[int] = None) -> str:
+    if start is None and limit is None:
+        return "data"
+    if start is None:
+        return f"data[:{limit}]"
+    if limit is None:
+        return f"data[{start}:]"
+    return f"data[{start}:{start + limit}]"
 
 
-def _load_dataset_frame(config_name: str, limit: Optional[int] = None) -> pd.DataFrame:
+def _load_dataset_frame(config_name: str, start: Optional[int]= None, limit: Optional[int] = None) -> pd.DataFrame:
     dataset = load_dataset(
         DATASET_NAME,
         config_name,
         cache_dir=str(DATASET_CACHE_DIR),
-        split=_build_split(limit),
+        split=_build_split(start, limit),
     )
     return cast(pd.DataFrame, dataset.to_pandas())
 
 
-def load_vietnamese_legal_datasets(limit: Optional[int] = None) -> pd.DataFrame:
-    df_content = _load_dataset_frame("content", limit)
-    df_metadata = _load_dataset_frame("metadata", limit)
+def load_vietnamese_legal_datasets(start: Optional[int]= None, limit: Optional[int] = None) -> pd.DataFrame:
+    df_content = _load_dataset_frame("content",start, limit)
+    df_metadata = _load_dataset_frame("metadata", start,limit)
     return df_content.merge(df_metadata, on="id")
 
 
-def load_vietnamese_legal_documents(limit: Optional[int] = None) -> list[Document]:
-    merged_rows = load_vietnamese_legal_datasets(limit).to_dict(orient="records")
+def load_vietnamese_legal_documents(start: Optional[int]= None, limit: Optional[int] = None) -> list[Document]:
+    merged_rows = load_vietnamese_legal_datasets(start,limit).to_dict(orient="records")
     docs = []
     for row in merged_rows:
         page_content = row.pop("content")

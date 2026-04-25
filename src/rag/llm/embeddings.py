@@ -57,33 +57,8 @@ def _resolve_cached_model_path(model_name: Optional[str]) -> Optional[str]:
     return str(snapshots[0])
 
 
-def _raise_for_known_huggingface_kernel_crash() -> None:
-    if platform.system() != "Windows" or sys.version_info[:2] != (3, 12):
-        return
-
-    try:
-        transformers_version = version("transformers")
-        tokenizers_version = version("tokenizers")
-        sentence_transformers_version = version("sentence-transformers")
-    except PackageNotFoundError:
-        return
-
-    if (
-        transformers_version == "5.6.2"
-        and tokenizers_version == "0.22.2"
-        and sentence_transformers_version == "5.4.1"
-    ):
-        raise RuntimeError(
-            "HuggingFaceEmbeddings is crashing the Python process in this Windows/Python 3.12 environment "
-            f"with transformers=={transformers_version}, tokenizers=={tokenizers_version}, "
-            f"sentence-transformers=={sentence_transformers_version}. "
-            "Use a different embedding provider for now, or recreate the environment with a stable Hugging Face stack "
-            "before rerunning this notebook."
-        )
-
 def embedding_factory(provider: EmbeddingProvider, model_name: Optional[str] = None, **kwargs) -> Embeddings:
     if provider == EmbeddingProvider.HUGGINGFACE:
-        _raise_for_known_huggingface_kernel_crash()
         resolved_model_name = _resolve_cached_model_path(model_name)
         return HuggingFaceEmbeddings(model_name=resolved_model_name, **kwargs)
     elif provider == EmbeddingProvider.OPENAI:
