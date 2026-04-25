@@ -1,2 +1,2 @@
-import settings 
-import types 
+from . import settings
+from . import types

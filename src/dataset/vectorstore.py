@@ -12,10 +12,9 @@ from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore 
 import enum
 
-from src.rag.llm.embeddings import embedding_factory, EmbeddingProvider, get_embedding_dim
-from src.settings.settings import QDRANT_URL
+from rag.llm.embeddings import get_embedding_dim
+from settings.settings import QDRANT_URL
 
-VECTORSTORED_PATH = "./stored"
 
 class VectorStoreType(enum.Enum):
     QDRANT = "qdrant"

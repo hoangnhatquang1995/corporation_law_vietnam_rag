@@ -1,2 +1,2 @@
-import embeddings
-import models
+from . import embeddings
+from . import models
