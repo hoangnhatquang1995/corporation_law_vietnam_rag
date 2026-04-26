@@ -15,7 +15,9 @@ def answer_question(message: str, history):
 	try:
 		rag_chain = create_agent_graph()
 		result = rag_chain.invoke({
-			"messages": [HumanMessage(content=question)]
+			"messages": [HumanMessage(content=question)],
+			"args": None,
+			"context": None
         },config = chat_config)
 	except Exception as exc:
 		return f"Hệ thống chưa thể trả lời lúc này: {exc}"

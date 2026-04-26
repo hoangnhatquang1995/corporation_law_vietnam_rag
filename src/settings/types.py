@@ -1,10 +1,12 @@
-from typing import Annotated,TypedDict, List, Optional, Union
+from typing import Annotated,TypedDict, List, Optional, Union, Any
 from langgraph.graph.message import add_messages
 from langchain.messages import AnyMessage
 from torch import int64
 
 class StateNode(TypedDict):
     messages : Annotated[List[AnyMessage], add_messages]
+    context : Optional[str]
+    args : Optional[dict[str,Any]]
 
 class VietnamLaw (TypedDict):
     id: int  # Unique numeric document ID

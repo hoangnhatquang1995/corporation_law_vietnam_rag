@@ -2,22 +2,7 @@ from langchain.tools import tool
 from settings.types import VietnamLaw
 from dataset.sql import SQLiteDatabase, VietnamLawModel
 from dataset.vectorstore import VectorStoreDB, VectorStoreType
-
-
-@tool
-def trich_xuat_van_ban_context(query: str) -> str:
-    """
-    Trích xuất các đoạn văn bản liên quan đến một truy vấn cụ thể từ cơ sở dữ liệu luật Việt Nam.
-    
-    Args:
-        query (str): Truy vấn tìm kiếm, có thể là một câu hỏi hoặc một cụm từ liên quan đến luật doanh nghiệp Việt Nam.
-    
-    Returns:
-        context (str): Một chuỗi văn bản chứa các đoạn trích xuất được từ cơ sở dữ liệu, có liên quan đến truy vấn đã cho. Chuỗi này có thể được sử dụng làm ngữ cảnh để trả lời câu hỏi của người dùng.
-    """
-    #TODO: implement context extraction logic using vector store retrieval or SQL queries based on the query input
-    return "Chức năng trích xuất văn bản chưa được triển khai. Vui lòng thử lại sau."
-
+from dataset import vietnamLawSql
 
 @tool
 def lay_van_ban_luat_day_du(law_id: str) -> VietnamLaw | None:
@@ -30,7 +15,7 @@ def lay_van_ban_luat_day_du(law_id: str) -> VietnamLaw | None:
     Returns:
         law (VietnamLaw): Một đối tượng chứa thông tin chi tiết về văn bản luật, bao gồm ID, tiêu đề, nội dung và ngày ban hành.
     """
-    sql_law = sql.get(law_id)
+    sql_law = vietnamLawSql.get(law_id)
     if sql_law:
         ret = VietnamLaw(
             **sql_law.model_dump()
