@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from dataset.vectorstore import VectorStoreDB, VectorStoreType
-from rag.chatbot.chatbot import create_rag_chain
+from rag.chatbot.chatbot import answer_question
 from rag.llm.embeddings import EmbeddingProvider, embedding_factory
 from settings.settings import EMBEDDING_MODEL, PERSIST_DIR, PROJECT_ROOT
 from dataset import documentDB
@@ -20,28 +20,6 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
-
-@lru_cache(maxsize=1)
-def get_rag_chain():
-	vectorstore = documentDB
-	if getattr(vectorstore, "db", None) is None:
-		vectorstore.build()
-	return create_rag_chain(vectorstore.as_retriver())
-
-
-def answer_question(message: str, history):
-	question = message.strip()
-	if not question:
-		return "Bạn hãy nhập câu hỏi trước khi gửi."
-
-	try:
-		rag_chain = get_rag_chain()
-		result = rag_chain.invoke({"input": question})
-	except Exception as exc:
-		return f"Hệ thống chưa thể trả lời lúc này: {exc}"
-
-	return result.get("answer", "Mình chưa tạo được câu trả lời phù hợp.")
 
 
 def create_gradio_app():

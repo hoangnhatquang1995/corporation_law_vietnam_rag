@@ -1,23 +1,25 @@
-from langchain_classic.chains import create_retrieval_chain
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.runnables import RunnablePassthrough
+from rag.agent.graph import create_agent_graph
+from langchain_core.messages import HumanMessage
 
 from rag.llm import llm
-from .system_prompts import prompt
 
-def create_qa_chain():
-    return create_stuff_documents_chain(
-        llm=llm,
-        prompt=prompt
-    )
+chat_config ={
+	"configurable": {
+		"thread_id": "phong_chat_001"}
+}
 
-def create_rag_chain(retriever):
-    qa_chain = create_qa_chain()
-    retrieval_chain = create_retrieval_chain(
-        retriever=retriever,
-        combine_docs_chain= qa_chain
-    )
-    return RunnablePassthrough.assign(
-        question=lambda values: values["input"]
-    ) | retrieval_chain
+def answer_question(message: str, history):
+	question = message.strip()
+	if not question:
+		return "Bạn hãy nhập câu hỏi trước khi gửi."
 
+	try:
+		rag_chain = create_agent_graph()
+		result = rag_chain.invoke({
+			"messages": [HumanMessage(content=question)]
+        },config = chat_config)
+	except Exception as exc:
+		return f"Hệ thống chưa thể trả lời lúc này: {exc}"
+
+	return result.get("answer", "Mình chưa tạo được câu trả lời phù hợp.")

@@ -2,7 +2,6 @@ from langchain.tools import tool
 from settings.types import VietnamLaw
 from dataset.sql import SQLiteDatabase, VietnamLawModel
 from dataset.vectorstore import VectorStoreDB, VectorStoreType
-from dataset import 
 
 
 @tool
