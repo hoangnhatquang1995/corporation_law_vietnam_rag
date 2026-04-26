@@ -11,6 +11,7 @@ from dataset.vectorstore import VectorStoreDB, VectorStoreType
 from rag.chatbot.chatbot import create_rag_chain
 from rag.llm.embeddings import EmbeddingProvider, embedding_factory
 from settings.settings import EMBEDDING_MODEL, PERSIST_DIR, PROJECT_ROOT
+from dataset import documentDB
 
 APP_TITLE = "Corporation Law Vietnam RAG"
 GRADIO_PATH = "/gradio"
@@ -23,16 +24,9 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @lru_cache(maxsize=1)
 def get_rag_chain():
-	vectorstore = VectorStoreDB(
-		type=VectorStoreType.CHROMA,
-		collection_name=COLLECTION_NAME,
-		embedder=embedding_factory(
-			EmbeddingProvider.HUGGINGFACE,
-			model_name=EMBEDDING_MODEL,
-		),
-		path=str(PROJECT_ROOT / "db" / PERSIST_DIR),
-	)
-	vectorstore.build()
+	vectorstore = documentDB
+	if getattr(vectorstore, "db", None) is None:
+		vectorstore.build()
 	return create_rag_chain(vectorstore.as_retriver())
 
 

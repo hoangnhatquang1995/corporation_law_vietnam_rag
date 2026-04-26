@@ -210,3 +210,4 @@ __marimo__/
 src/dataset/test.py
 db/sql/vietnam_laws.db.db
 db/vectorstore/chroma.sqlite3
+db/sql/log_entry.db.db

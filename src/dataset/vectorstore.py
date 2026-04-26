@@ -21,8 +21,8 @@ class VectorStoreType(enum.Enum):
     CHROMA = "chroma"
 
 class VectorStoreDB:
-    db : VectorStore
-    collection_name : Optional[str]
+    db : Optional[VectorStore]
+    name : Optional[str]
     embedder : Optional[Embeddings]
     type : VectorStoreType
     path : Optional[str]
@@ -31,31 +31,41 @@ class VectorStoreDB:
     qdrant_batch_size : int
     qdrant_wait : bool
 
-    def __init__(self, type: VectorStoreType, collection_name: Optional[str] = None, embedder: Optional[Embeddings] = None, path: Optional[str] = None):
+
+    def __init__(self, type: VectorStoreType, name: Optional[str] = None, embedder: Optional[Embeddings] = None, path: Optional[str] = None):
         self.type = type 
-        self.collection_name = collection_name
+        self.name = name
         self.embedder = embedder
         self.path = path
+        self.db = None
+        self.client = None
         self.timeout = int(os.getenv("QDRANT_TIMEOUT", "120"))
         self.qdrant_batch_size = int(os.getenv("QDRANT_BATCH_SIZE", "16"))
         self.qdrant_wait = os.getenv("QDRANT_UPSERT_WAIT", "false").lower() == "true"
         if self.type == VectorStoreType.QDRANT:
             self.client = QdrantClient(url=QDRANT_URL, timeout=self.timeout)
-        
+    
+    def init(self, embedder: Optional[Embeddings] = None, path: Optional[str] = None):
+        if embedder is not None:
+            self.embedder = embedder
+        if path is not None:
+            self.path = path
+
+
     def set_embedder(self, embedder: Embeddings):
         self.embedder = embedder
 
     def build(self):
         if self.embedder is None:
             raise ValueError("[1][ERROR] Embedder phải được cung cấp để xây dựng vector store.")
-        if self.collection_name is None:
+        if self.name is None:
             raise ValueError("[2][ERROR] Tên bộ sưu tập phải được cung cấp để xây dựng vector store.")
         if self.type == VectorStoreType.QDRANT:
             if self.client is None:
                 self.client = QdrantClient(url=QDRANT_URL, timeout=self.timeout)
-            if not self.client.collection_exists(self.collection_name):
+            if not self.client.collection_exists(self.name):
                 self.client.recreate_collection(
-                    collection_name=self.collection_name,
+                    collection_name=self.name,
                     vectors_config=rest.VectorParams(
                         size= get_embedding_dim(self.embedder), 
                         distance=rest.Distance.COSINE
@@ -63,13 +73,13 @@ class VectorStoreDB:
                 )
             self.db = QdrantVectorStore(
                 client=self.client,
-                collection_name=self.collection_name,
+                collection_name=self.name,
                 embedding=self.embedder
             )
             pass
         elif self.type == VectorStoreType.CHROMA:
             self.db = Chroma(
-                collection_name=self.collection_name, 
+                collection_name=self.name, 
                 embedding_function= self.embedder, 
                 persist_directory=self.path
             )
@@ -104,7 +114,7 @@ class VectorStoreDB:
     def delete(self, document_ids: List[str]):
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
-        if self.collection_name is None:
+        if self.name is None:
             raise ValueError("[2][ERROR] Tên bộ sưu tập phải được cung cấp để xóa tài liệu.")
         if self.type == VectorStoreType.QDRANT:
             #TODO: delete documents from qdrant vector store
@@ -113,7 +123,7 @@ class VectorStoreDB:
             else:
                 for doc_id in document_ids:
                     self.client.delete(
-                        collection_name=self.collection_name,
+                        collection_name=self.name,
                         points_selector=rest.PointIdsList(points=[doc_id])
                     )
             pass
@@ -127,7 +137,7 @@ class VectorStoreDB:
     def update(self, documents: List[Document]):
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
-        if self.collection_name is None:
+        if self.name is None:
             raise ValueError("[2][ERROR] Tên bộ sưu tập phải được cung cấp để cập nhật tài liệu.")
         if self.embedder is None:
             raise ValueError("[3][ERROR] Embedder phải được cung cấp để cập nhật tài liệu.")
@@ -141,7 +151,7 @@ class VectorStoreDB:
                     if metadata_id is None:
                         raise ValueError("[2][ERROR] Mỗi tài liệu phải có 'id' trong metadata để cập nhật.")
                     self.client.upsert(
-                        collection_name=self.collection_name,
+                        collection_name=self.name,
                         points=[
                             rest.PointStruct(
                                 id= metadata_id, 
@@ -166,3 +176,4 @@ class VectorStoreDB:
             return self.db.as_retriever()  
         else:
             raise ValueError(f"Unsupported vector store type: {self.type}")   
+    
