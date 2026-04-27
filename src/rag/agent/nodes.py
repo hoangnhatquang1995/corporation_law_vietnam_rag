@@ -2,9 +2,9 @@ from settings.types import StateNode
 from rag.llm.models import get_llm_model, LLMProvider
 from rag.llm import llm
 from .system_prompts import llm_system_prompt,rag_system_prompt
+from rag.grading.rerank import rerank_documents
+
 from dataset import documentDB 
-
-
 
 def llm_node(state: StateNode):
     messages = [
@@ -20,19 +20,29 @@ def retriving_node(state: StateNode):
     question: str = str(state["messages"][-1].content) or ""
     if not question:
         raise ValueError("Question is required for RAG node")
-    context = documentDB.query(question, top_k=5)
-    context_str = "\n\n".join([f"""Document {doc.metadata['title']} - Number {doc.metadata['document_number']}:\n{doc.page_content}""" for i, doc in enumerate(context)])
-    print(f"RAG Node - Retrieved Context:\n{context_str}\n")
+    docs = documentDB.query(question, top_k=5)
     return {
-        "context": context_str,
         "args": {
-            "retrieved_docs": [doc.metadata for doc in context]
+            "retrieved_docs": docs
         }
     }
 
+def rerank_node(state: StateNode):
+    question: str = str(state["messages"][-1].content) or ""
+    if not question:
+        raise ValueError("Question is required for RAG node")
+    retrieved_docs = state.get("args", {}).get("retrieved_docs", [])
+    if not retrieved_docs:
+        raise ValueError("No documents to rerank")
+    reranked_docs = rerank_documents(llm, question, retrieved_docs, n_top=2)
+    print(f"Rerank Node - Reranked Documents Metadata:\n{[doc for doc in reranked_docs]}\n")
+    state["args"]["retrieved_docs"] = reranked_docs
+    return state
+
 def rag_node(state: StateNode) :
     question: str = str(state["messages"][-1].content) or ""
-    context: str = state.get("context") or ""
+    retrieved_docs = state.get("args", {}).get("retrieved_docs", [])
+    context = "\n\n".join([f"""Document {doc.metadata['title']} - Number {doc.metadata['document_number']}:\n{doc.page_content}""" for i, doc in enumerate(retrieved_docs)])
     if not question:
         raise ValueError("Question is required for RAG node")
     msgs = rag_system_prompt.format_messages(context=context, question=question)

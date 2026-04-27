@@ -1,23 +1,22 @@
 from langchain_core.runnables import RunnableConfig
 from rag.agent.graph import create_agent_graph
 from langchain_core.messages import HumanMessage
+import gradio as gr 
 
 chat_config: RunnableConfig = {
-	"configurable": {
-		"thread_id": "phong_chat_001"}
+	"configurable": {}
 }
 
-def answer_question(message: str, history):
+def answer_question(message: str, history, request : gr.Request):
 	question = message.strip()
 	if not question:
 		return "Bạn hãy nhập câu hỏi trước khi gửi."
-
+	chat_config["configurable"]["thread_id"] = request.session_hash if request else "local"
 	try:
 		rag_chain = create_agent_graph()
 		result = rag_chain.invoke({
 			"messages": [HumanMessage(content=question)],
 			"args": None,
-			"context": None
         },config = chat_config)
 	except Exception as exc:
 		return f"Hệ thống chưa thể trả lời lúc này: {exc}"

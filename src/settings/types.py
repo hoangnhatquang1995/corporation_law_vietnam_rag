@@ -5,7 +5,6 @@ from torch import int64
 
 class StateNode(TypedDict):
     messages : Annotated[List[AnyMessage], add_messages]
-    context : Optional[str]
     args : Optional[dict[str,Any]]
 
 class VietnamLaw (TypedDict):
