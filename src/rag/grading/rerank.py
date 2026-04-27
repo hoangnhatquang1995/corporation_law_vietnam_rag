@@ -47,7 +47,7 @@ def rerank_using_llm(query : str, documents : list[Document], n_top : int = 5) -
         for doc in documents
     ]
 
-    llm_score = llm.with_structured_output(RerankScore)
+    llm_score = llm.with_structured_output(RerankScore, method="function_calling")
     try:
         # Gọi batch song song
         responses = llm_score.batch(prompts_batch)

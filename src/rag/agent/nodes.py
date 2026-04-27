@@ -1,19 +1,29 @@
 from settings.types import StateNode
 from rag.llm.models import get_llm_model, LLMProvider
 from rag.llm import get_llm
-from .system_prompts import llm_system_prompt,rag_system_prompt
+from langchain_core.messages import AIMessage
+from .system_prompts import rag_system_prompt,assistant_system_prompt,llm_answer_system_prompt
 from rag.grading.rerank import rerank_documents
+from rag.agent.state import LLMAnswer,MessageType
 
 from dataset import documentDB 
 
 def llm_node(state: StateNode):
     messages = [
-        llm_system_prompt,
+        llm_answer_system_prompt,
         *state["messages"]
     ]
-    response = get_llm().invoke(messages)
+    llm_answer = get_llm().with_structured_output(LLMAnswer, method="function_calling")
+    raw_response = llm_answer.invoke(messages)
+    response = LLMAnswer.model_validate(raw_response) if raw_response is not None else None
+    message_type = response.answer if response else MessageType.GENERAL_KNOWLEDGE
+    if message_type==MessageType.LEGAL_QUESTION:
+        messages = []
+    else:
+        messages = [AIMessage(content=response.message) if response else AIMessage(content="Xin lỗi, tôi không thể phân tích câu hỏi của bạn.")]
     return {
-        "messages": [response]
+        "type": message_type,
+        "messages": messages
     }
 
 def retriving_node(state: StateNode):
@@ -31,24 +41,31 @@ def rerank_node(state: StateNode):
     question: str = str(state["messages"][-1].content) or ""
     if not question:
         raise ValueError("Question is required for RAG node")
-    retrieved_docs = state.get("args", {}).get("retrieved_docs", [])
+    args = state.get("args") or {}
+    retrieved_docs = args.get("retrieved_docs", [])
     if not retrieved_docs:
         raise ValueError("No documents to rerank")
     reranked_docs = rerank_documents(question, retrieved_docs, n_top=2)
-    state["args"]["retrieved_docs"] = reranked_docs
-    return state
+    return {
+        "args": {
+            **args,
+            "retrieved_docs": reranked_docs,
+        }
+    }
 
 def rag_node(state: StateNode) :
-    question: str = str(state["messages"][-1].content) or ""
-    retrieved_docs = state.get("args", {}).get("retrieved_docs", [])
+    chat_history = state["messages"]
+    question: str = str(chat_history[-1].content) or ""
+    args = state.get("args") or {}
+    retrieved_docs = args.get("retrieved_docs", [])
     context = "\n\n".join([f"""Document {doc.metadata['title']} - Number {doc.metadata['document_number']}:\n{doc.page_content}""" for i, doc in enumerate(retrieved_docs)])
     if not question:
         raise ValueError("Question is required for RAG node")
-    msgs = rag_system_prompt.format_messages(context=context, question=question)
+    msgs = [assistant_system_prompt] + rag_system_prompt.format_messages(context=context, question=question)
     response = get_llm().invoke(msgs)
     if response is not None:
-        if state["args"] is not None and "retrieved_docs" in state["args"]:
-            retrieved_docs = state["args"]["retrieved_docs"]
+        if "retrieved_docs" in args:
+            retrieved_docs = args["retrieved_docs"]
             print(f"RAG Node - Retrieved Documents Metadata:\n{retrieved_docs}\n")
             refrence_docs = [f"- [{doc.metadata.get('title')}]({doc.metadata.get('url')})\n" for doc in retrieved_docs if doc.metadata.get("url")]
             if refrence_docs:

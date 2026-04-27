@@ -21,9 +21,9 @@ def answer_question(message: str, history, request : gr.Request):
 	except Exception as exc:
 		return f"Hệ thống chưa thể trả lời lúc này: {exc}"
 
-	answer = result.get("answer")
-	if isinstance(answer, str) and answer.strip():
-		return answer
+	# answer = result.get("answer")
+	# if isinstance(answer, str) and answer.strip():
+	# 	return answer
 
 	messages = result.get("messages") or []
 	if messages:

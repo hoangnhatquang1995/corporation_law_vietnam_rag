@@ -4,6 +4,7 @@ from langchain.messages import AnyMessage
 from torch import int64
 
 class StateNode(TypedDict):
+    type: Optional[str]
     messages : Annotated[List[AnyMessage], add_messages]
     args : Optional[dict[str,Any]]
 

@@ -34,7 +34,8 @@ QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 QDRANT_URL  = f"http://{QDRANT_HOST}:{QDRANT_PORT}"
 
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-RERANKER_MODEL =  "cross-encoder/ms-marco-MiniLM-L-6-v2"
+# RERANKER_MODEL =  "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 SENTENCE_TRANFORMER_MODEL = "all-MiniLM-L6-v2"
 LLM_MODEL = "deepseek-r1"
 PERSIST_DIR = "vectorstore"
