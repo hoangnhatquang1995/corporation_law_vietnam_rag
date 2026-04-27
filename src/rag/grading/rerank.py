@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from langchain_core.prompts import SystemMessagePromptTemplate
 from langchain_core.documents import Document
 from langchain.chat_models import BaseChatModel
-from rag.llm import llm
+from rag.llm import get_cross_encoder, llm
 from sentence_transformers import CrossEncoder
 from settings.settings import RERANKER_MODEL
 
@@ -26,9 +26,7 @@ def rerank_documents(query_embedding : str, document_embedding : list[Document],
     return rerank_using_embedding(query_embedding, document_embedding, n_top)
 
 def rerank_using_embedding(query : str, documents : list[Document], n_top : int = 5) -> list[Document]:
-    global rerank_encoder
-    if rerank_encoder is None:
-        rerank_encoder = CrossEncoder(RERANKER_MODEL)
+    rerank_encoder = get_cross_encoder()
     setences = [[query, doc.page_content] for doc in documents]
     scores = rerank_encoder.predict(setences)
     reranked = sorted(

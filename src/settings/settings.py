@@ -8,6 +8,7 @@ load_dotenv()
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATASET_CACHE_DIR = PROJECT_ROOT / "datasets" / "dataset_cache"
 MODEL_CACHE_DIR = PROJECT_ROOT / "models" / "model_cache"
+SENTENCE_CACHE_DIR = PROJECT_ROOT / "models" / "sentence_cache"
 HUGGINGFACE_HUB_CACHE_DIR = MODEL_CACHE_DIR / "hub"
 TRANSFORMERS_CACHE_DIR = MODEL_CACHE_DIR / "transformers"
 SENTENCE_TRANSFORMERS_CACHE_DIR = MODEL_CACHE_DIR / "sentence_transformers"
@@ -27,6 +28,7 @@ os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(HUGGINGFACE_HUB_CACHE_DIR))
 os.environ.setdefault("TRANSFORMERS_CACHE", str(TRANSFORMERS_CACHE_DIR))
 os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(SENTENCE_TRANSFORMERS_CACHE_DIR))
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(SENTENCE_TRANSFORMERS_CACHE_DIR))
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
