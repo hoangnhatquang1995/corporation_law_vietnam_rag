@@ -1,6 +1,6 @@
 from settings.types import StateNode
 from rag.llm.models import get_llm_model, LLMProvider
-from rag.llm import llm
+from rag.llm import get_llm
 from .system_prompts import llm_system_prompt,rag_system_prompt
 from rag.grading.rerank import rerank_documents
 
@@ -11,7 +11,7 @@ def llm_node(state: StateNode):
         llm_system_prompt,
         *state["messages"]
     ]
-    response = llm.invoke(messages)
+    response = get_llm().invoke(messages)
     return {
         "messages": [response]
     }
@@ -20,7 +20,7 @@ def retriving_node(state: StateNode):
     question: str = str(state["messages"][-1].content) or ""
     if not question:
         raise ValueError("Question is required for RAG node")
-    docs = documentDB.query(question, top_k=5)
+    docs = documentDB.query(question, top_k=15)
     return {
         "args": {
             "retrieved_docs": docs
@@ -35,7 +35,6 @@ def rerank_node(state: StateNode):
     if not retrieved_docs:
         raise ValueError("No documents to rerank")
     reranked_docs = rerank_documents(question, retrieved_docs, n_top=2)
-    print(f"Rerank Node - Reranked Documents Metadata:\n{[doc for doc in reranked_docs]}\n")
     state["args"]["retrieved_docs"] = reranked_docs
     return state
 
@@ -46,7 +45,7 @@ def rag_node(state: StateNode) :
     if not question:
         raise ValueError("Question is required for RAG node")
     msgs = rag_system_prompt.format_messages(context=context, question=question)
-    response = llm.invoke(msgs)
+    response = get_llm().invoke(msgs)
     if response is not None:
         if state["args"] is not None and "retrieved_docs" in state["args"]:
             retrieved_docs = state["args"]["retrieved_docs"]
