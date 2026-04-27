@@ -10,34 +10,66 @@
     <link rel="stylesheet" href="{{ request.url_for('static', path='site.css') }}">
 </head>
 <body>
-    <main class="page">
-        <section class="hero">
-            <article class="hero-card">
-                <div class="eyebrow">FastAPI + Gradio + HTML Template</div>
-                <h1>Website hỏi đáp về Luật Doanh Nghiệp Việt Nam</h1>
-                <p>
-                    Trang này là phần vỏ HTML của website. Phần chat được mount bằng Gradio,
-                    nên bạn vẫn có giao diện web rõ ràng mà api.py không cần viết quá nhiều.
+    <main class="app-shell">
+        <header class="app-header">
+            <a class="brand" href="/" aria-label="Trang chủ trợ lý luật doanh nghiệp">
+                <span class="brand-mark">LV</span>
+                <span class="brand-copy">
+                    <strong>Trợ lý Luật Doanh nghiệp</strong>
+                    <span>Hỏi đáp pháp lý doanh nghiệp Việt Nam</span>
+                </span>
+            </a>
+
+            <div class="header-actions">
+                <span class="status-pill">Sẵn sàng hỗ trợ</span>
+                <a class="ghost-link" href="{{ gradio_path }}" target="_blank" rel="noreferrer">Mở toàn màn hình</a>
+            </div>
+        </header>
+
+        <section class="workspace" id="chat-box">
+            <div class="workspace-intro">
+                <p class="eyebrow">Trợ lý ảo pháp lý</p>
+                <h1>Tra cứu nhanh các vấn đề về Luật Doanh nghiệp Việt Nam.</h1>
+                <p class="intro-text">
+                    Đặt câu hỏi trực tiếp trong khung chat để nhận câu trả lời ngắn gọn,
+                    rõ ý và ưu tiên dẫn chiếu tài liệu liên quan khi có.
                 </p>
-                <div class="hero-actions">
-                    <a class="primary-link" href="#chat-box">Bắt đầu hỏi đáp</a>
-                </div>
-            </article>
-        </section>
 
-        <section class="frame-card" id="chat-box">
-            <div class="frame-header">
-                <div>
-                    <h2>Khu vực chat</h2>
-                    <p>Đây là Gradio app được nhúng trực tiếp vào trang HTML.</p>
+                <div class="intro-tags" aria-label="Các điểm chính của hệ thống">
+                    <span>Luật doanh nghiệp</span>
+                    <span>Phản hồi ngắn gọn</span>
+                    <span>Ưu tiên tham khảo nguồn</span>
                 </div>
-                <a href="{{ gradio_path }}" target="_blank" rel="noreferrer">Mở riêng Gradio</a>
             </div>
 
-            <div class="frame-shell">
-                <div class="frame-loading" id="frame-loading">Đang tải giao diện chat...</div>
-                <iframe src="{{ gradio_path }}" title="Gradio App" id="gradio-frame"></iframe>
-            </div>
+            <section class="chat-card" aria-labelledby="chat-title">
+                <div class="chat-card-header">
+                    <div>
+                        <p class="section-kicker">Khung trao đổi</p>
+                        <h2 id="chat-title">Bắt đầu cuộc trò chuyện</h2>
+                        <p>Nhập câu hỏi trong khung chat bên dưới hoặc mở giao diện chat riêng nếu cần.</p>
+                    </div>
+                    <a class="text-link" href="{{ gradio_path }}" target="_blank" rel="noreferrer">Mở giao diện chat riêng</a>
+                </div>
+
+                <div class="frame-shell">
+                    <div class="frame-loading" id="frame-loading" aria-live="polite">
+                        <span class="loading-dot" aria-hidden="true"></span>
+                        <span>Đang tải phiên chat...</span>
+                    </div>
+                    <iframe
+                        src="{{ gradio_path }}"
+                        title="Trợ lý Luật Doanh Nghiệp Việt Nam"
+                        id="gradio-frame"
+                        loading="lazy"
+                    ></iframe>
+                </div>
+
+                <p class="chat-note">
+                    Nội dung trả lời phục vụ tra cứu ban đầu. Khi sử dụng cho hồ sơ hoặc quyết định thực tế,
+                    nên kiểm tra lại văn bản pháp luật và nguồn chính thức.
+                </p>
+            </section>
         </section>
     </main>
     <script src="{{ request.url_for('static', path='site.js') }}"></script>
