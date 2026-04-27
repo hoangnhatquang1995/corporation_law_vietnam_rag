@@ -51,7 +51,7 @@ def rag_node(state: StateNode) :
         if state["args"] is not None and "retrieved_docs" in state["args"]:
             retrieved_docs = state["args"]["retrieved_docs"]
             print(f"RAG Node - Retrieved Documents Metadata:\n{retrieved_docs}\n")
-            refrence_docs = [f"[{doc.get('title')}]({doc.get('url')})\n" for doc in retrieved_docs if doc.get("url")]
+            refrence_docs = [f"- [{doc.metadata.get('title')}]({doc.metadata.get('url')})\n" for doc in retrieved_docs if doc.metadata.get("url")]
             if refrence_docs:
                 response.content += "\n\nTham khảo:\n" + "\n".join(refrence_docs)
             else:
