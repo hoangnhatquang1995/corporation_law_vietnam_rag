@@ -2,7 +2,10 @@ from langchain.tools import tool
 from settings.types import VietnamLaw
 from dataset.sql import SQLiteDatabase, VietnamLawModel
 from dataset.vectorstore import VectorStoreDB, VectorStoreType
+from langchain_tavily import TavilySearch
 from dataset import vietnamLawSql
+
+search_tool = TavilySearch(max_results=3, name="web_search")
 
 @tool
 def lay_van_ban_luat_day_du(law_id: str) -> VietnamLaw | None:
@@ -36,5 +39,8 @@ def tim_kiem_tren_mang(query : str) -> str:
     Returns:
         result (str): Kết quả tìm kiếm được trả về dưới dạng văn bản, có thể là một đoạn trích từ một trang web, một bài báo, hoặc một nguồn thông tin đáng tin cậy khác.
     """
-    #TODO: implement web search functionality using an appropriate API (e.g., Google Custom Search API, Bing Search API, etc.)
+    result = search_tool.run(query)
+    if result:
+        print(f"[web_search] Search results for query '{query}': {result}")
+        return result
     return "Chức năng tìm kiếm trên mạng chưa được triển khai. Vui lòng thử lại sau."

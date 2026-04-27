@@ -34,7 +34,7 @@ def rerank_node(state: StateNode):
     retrieved_docs = state.get("args", {}).get("retrieved_docs", [])
     if not retrieved_docs:
         raise ValueError("No documents to rerank")
-    reranked_docs = rerank_documents(llm, question, retrieved_docs, n_top=2)
+    reranked_docs = rerank_documents(question, retrieved_docs, n_top=2)
     print(f"Rerank Node - Reranked Documents Metadata:\n{[doc for doc in reranked_docs]}\n")
     state["args"]["retrieved_docs"] = reranked_docs
     return state
