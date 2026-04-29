@@ -2,43 +2,45 @@ from settings.types import StateNode
 from rag.llm.models import get_llm_model, LLMProvider
 from rag.llm import get_llm
 from langchain_core.messages import AIMessage
-from .system_prompts import rag_system_prompt,assistant_system_prompt,llm_answer_system_prompt,llm_system_promp,rewrite_question_system_prompt
+from .system_prompts import rag_system_prompt,assistant_system_prompt,llm_answer_system_prompt,llm_system_promp,rewrite_query_system_prompt
 from rag.grading.rerank import rerank_documents
 from rag.agent.state import LLMAnswer,MessageType
-from rag.llm.prediction import predict_required_consult_classification
+from rag.llm.prediction import predict_required_consult_classification,get_model_max_length
 
 from dataset import documentDB 
 
 
 def rewrite_question_node(state: StateNode):
-    question = str(state["messages"][-1].content) or ""
+    question = str(state["question"]) or ""
     if not question:
         raise ValueError("Question is required for rewrite question node")
     if len(state["messages"]) <= 1:
         return {
             "question": question
         }
-    chat_history = state["messages"][:-1]
-    msgs = rewrite_question_system_prompt.format_messages(
-        messages=chat_history, 
+    chat_history = state["messages"]
+    msgs = rewrite_query_system_prompt.format_messages(
+        messages=str(chat_history), 
+        max_length=get_model_max_length(),
         question=question
     )
     rewritten_question = get_llm().invoke(msgs)
     return {
-        "question": rewritten_question
+        "question": rewritten_question.content if rewritten_question else question
     }
+
 def routing_decision_node(state: StateNode):
-    # question = str(state["messages"][-1].content) or ""
-    # if not question:
-    #     raise ValueError("Question is required for routing decision node")
-    # is_legal_question = predict_required_consult_classification(question)
-    # print(f"Routing Decision Node - Question: {question}, Is Legal Question: {is_legal_question == 1}")
-    # return {
-    #     "type": MessageType.LEGAL_QUESTION if is_legal_question else MessageType.GENERAL_KNOWLEDGE
-    # }
+    question = str(state["question"]) or ""
+    if not question:
+        raise ValueError("Question is required for routing decision node")
+    is_legal_question = predict_required_consult_classification(question)
+    print(f"Routing Decision Node - Question: {question}, Is Legal Question: {is_legal_question == 1}")
     return {
-        "type": MessageType.LEGAL_QUESTION
+        "type": MessageType.LEGAL_QUESTION if is_legal_question else MessageType.GENERAL_KNOWLEDGE
     }
+    # return {
+    #     "type": MessageType.LEGAL_QUESTION
+    # }
 
 def llm_node(state: StateNode):
     messages = [
@@ -98,7 +100,7 @@ def rag_node(state: StateNode) :
     context = "\n\n".join([f"""Document {doc.metadata['title']} - Number {doc.metadata['document_number']}:\n{doc.page_content}""" for i, doc in enumerate(retrieved_docs)])
     if not question:
         raise ValueError("Question is required for RAG node")
-    msgs = [assistant_system_prompt] + rag_system_prompt.format_messages(context=context, question=question)
+    msgs = rag_system_prompt.format_messages(context=context, question=question)
     response = get_llm().invoke(msgs)
     if response is not None:
         if "retrieved_docs" in args:

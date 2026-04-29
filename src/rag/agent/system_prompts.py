@@ -2,18 +2,25 @@ from langchain.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate
 
 
-rewrite_question_system_prompt = SystemMessagePromptTemplate.from_template(
+rewrite_query_system_prompt = SystemMessagePromptTemplate.from_template(
     """
-        Bạn là một trợ lý ảo được thiết kế để hỗ trợ người dùng trong việc viết lại câu hỏi.
-        Dựa theo lịch sử hội thoại trước đó, bạn hãy phân tích câu hỏi và viết lại nó một cách rõ ràng và chính xác.
-        Đoạn hội thoại trước đó có thể cung cấp ngữ cảnh để bạn hiểu rõ hơn về câu hỏi của người dùng, nhưng hãy tập trung vào việc viết lại câu hỏi hiện tại một cách tốt nhất có thể.
-        Nếu câu hỏi của người dùng đã rõ ràng và chính xác, bạn có thể trả lại câu hỏi đó mà không cần chỉnh sửa.
-        
-        Đoạn hội thoại trước đó:
+        Bạn là bộ tiền xử lý truy vấn cho hệ thống phân luồng và RAG về luật doanh nghiệp Việt Nam.
+        Nhiệm vụ của bạn là viết lại câu hỏi hiện tại thành một truy vấn độc lập, rõ chủ thể, rõ ngữ cảnh và giữ nguyên ý định ban đầu của người dùng.
+        Chỉ dùng lịch sử hội thoại để bổ sung phần còn thiếu như chủ thể, đối tượng, điều kiện, mốc thời gian hoặc tài liệu đang được nhắc tới.
+        Không thêm thông tin pháp lý mới. Không tự suy diễn ngoài lịch sử hội thoại.
+        Nếu câu hỏi hiện tại đã đủ rõ và độc lập, hãy trả lại gần như nguyên văn.
+        Nếu câu hỏi hiện tại không liên quan tới lịch sử hội thoại trước đó, hãy giữ nguyên câu hỏi hiện tại.
+        Chỉ trả về đúng một câu truy vấn đã viết lại, không giải thích gì thêm.
+
+        Giới hạn tối đa {max_length} từ cho câu truy vấn đã viết lại.
+
+        Lịch sử hội thoại gần nhất:
         {messages}
 
         Câu hỏi hiện tại của người dùng:
         {question}
+
+
     """
 )
 
