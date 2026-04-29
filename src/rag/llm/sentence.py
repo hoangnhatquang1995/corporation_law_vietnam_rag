@@ -9,3 +9,4 @@ def get_cross_encoder():
 	if _rerank_encoder is None:
 		_rerank_encoder = CrossEncoder(RERANKER_MODEL)
 	return _rerank_encoder
+	

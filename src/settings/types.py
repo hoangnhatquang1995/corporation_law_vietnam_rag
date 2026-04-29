@@ -5,6 +5,7 @@ from torch import int64
 
 class StateNode(TypedDict):
     type: Optional[str]
+    question: Optional[str]
     messages : Annotated[List[AnyMessage], add_messages]
     args : Optional[dict[str,Any]]
 

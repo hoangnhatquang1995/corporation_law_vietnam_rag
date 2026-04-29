@@ -12,6 +12,7 @@ SENTENCE_CACHE_DIR = PROJECT_ROOT / "models" / "sentence_cache"
 HUGGINGFACE_HUB_CACHE_DIR = MODEL_CACHE_DIR / "hub"
 TRANSFORMERS_CACHE_DIR = MODEL_CACHE_DIR / "transformers"
 SENTENCE_TRANSFORMERS_CACHE_DIR = MODEL_CACHE_DIR / "sentence_transformers"
+REQUIRED_CONSULT_CLASSIFICATION_MODEL_DIR = PROJECT_ROOT / "models" / "fine-tune_model" / "legal_consult_phobert"
 
 for cache_dir in (
 	DATASET_CACHE_DIR,

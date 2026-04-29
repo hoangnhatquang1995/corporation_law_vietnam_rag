@@ -2,32 +2,69 @@ from settings.types import StateNode
 from rag.llm.models import get_llm_model, LLMProvider
 from rag.llm import get_llm
 from langchain_core.messages import AIMessage
-from .system_prompts import rag_system_prompt,assistant_system_prompt,llm_answer_system_prompt
+from .system_prompts import rag_system_prompt,assistant_system_prompt,llm_answer_system_prompt,llm_system_promp,rewrite_question_system_prompt
 from rag.grading.rerank import rerank_documents
 from rag.agent.state import LLMAnswer,MessageType
+from rag.llm.prediction import predict_required_consult_classification
 
 from dataset import documentDB 
 
-def llm_node(state: StateNode):
-    messages = [
-        llm_answer_system_prompt,
-        *state["messages"]
-    ]
-    llm_answer = get_llm().with_structured_output(LLMAnswer, method="function_calling")
-    raw_response = llm_answer.invoke(messages)
-    response = LLMAnswer.model_validate(raw_response) if raw_response is not None else None
-    message_type = response.answer if response else MessageType.GENERAL_KNOWLEDGE
-    if message_type==MessageType.LEGAL_QUESTION:
-        messages = []
-    else:
-        messages = [AIMessage(content=response.message) if response else AIMessage(content="Xin lỗi, tôi không thể phân tích câu hỏi của bạn.")]
+
+def rewrite_question_node(state: StateNode):
+    question = str(state["messages"][-1].content) or ""
+    if not question:
+        raise ValueError("Question is required for rewrite question node")
+    if len(state["messages"]) <= 1:
+        return {
+            "question": question
+        }
+    chat_history = state["messages"][:-1]
+    msgs = rewrite_question_system_prompt.format_messages(
+        messages=chat_history, 
+        question=question
+    )
+    rewritten_question = get_llm().invoke(msgs)
     return {
-        "type": message_type,
-        "messages": messages
+        "question": rewritten_question
+    }
+def routing_decision_node(state: StateNode):
+    # question = str(state["messages"][-1].content) or ""
+    # if not question:
+    #     raise ValueError("Question is required for routing decision node")
+    # is_legal_question = predict_required_consult_classification(question)
+    # print(f"Routing Decision Node - Question: {question}, Is Legal Question: {is_legal_question == 1}")
+    # return {
+    #     "type": MessageType.LEGAL_QUESTION if is_legal_question else MessageType.GENERAL_KNOWLEDGE
+    # }
+    return {
+        "type": MessageType.LEGAL_QUESTION
     }
 
+def llm_node(state: StateNode):
+    messages = [
+        llm_system_promp,
+        state["question"]
+    ]
+    response = get_llm().invoke(messages)
+    return {
+        "messages": [response] if response else []
+    }
+
+    # llm_answer = get_llm().with_structured_output(LLMAnswer, method="function_calling")
+    # raw_response = llm_answer.invoke(messages)
+    # response = LLMAnswer.model_validate(raw_response) if raw_response is not None else None
+    # message_type = response.answer if response else MessageType.GENERAL_KNOWLEDGE
+    # if message_type==MessageType.LEGAL_QUESTION:
+    #     messages = []
+    # else:
+    #     messages = [AIMessage(content=response.message) if response else AIMessage(content="Xin lỗi, tôi không thể phân tích câu hỏi của bạn.")]
+    # return {
+    #     "type": message_type,
+    #     "messages": messages
+    # }
+
 def retriving_node(state: StateNode):
-    question: str = str(state["messages"][-1].content) or ""
+    question: str = str(state["question"]) or ""
     if not question:
         raise ValueError("Question is required for RAG node")
     docs = documentDB.query(question, top_k=15)
@@ -38,7 +75,7 @@ def retriving_node(state: StateNode):
     }
 
 def rerank_node(state: StateNode):
-    question: str = str(state["messages"][-1].content) or ""
+    question: str = str(state["question"]) or ""
     if not question:
         raise ValueError("Question is required for RAG node")
     args = state.get("args") or {}
@@ -55,7 +92,7 @@ def rerank_node(state: StateNode):
 
 def rag_node(state: StateNode) :
     chat_history = state["messages"]
-    question: str = str(chat_history[-1].content) or ""
+    question: str = str(state["question"]) or ""
     args = state.get("args") or {}
     retrieved_docs = args.get("retrieved_docs", [])
     context = "\n\n".join([f"""Document {doc.metadata['title']} - Number {doc.metadata['document_number']}:\n{doc.page_content}""" for i, doc in enumerate(retrieved_docs)])
