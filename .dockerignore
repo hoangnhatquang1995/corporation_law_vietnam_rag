@@ -1,0 +1,13 @@
+datasets/
+models/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.ipynb_checkpoints/
+src/**/*.ipynb
+db/sql/
+db/vectorstore/
+stored/
