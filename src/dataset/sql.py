@@ -1,5 +1,6 @@
 from typing import Annotated,TypedDict, List, Optional,Any, Union, Mapping, cast 
 from pydantic import BaseModel
+from sqlalchemy import JSON, Column
 from sqlmodel import select, Session, SQLModel, create_engine, Field
 from settings.types import VietnamLaw
 from pandas import DataFrame, Series, isna
@@ -26,8 +27,8 @@ class LogEntryModel(SQLModel, table=True):
 
 class ChatroomModel(SQLModel, table = True):
     roomId: str = Field(primary_key=True)
-    name: Optional[str] 
-    messages: List[str]
+    name: Optional[str] = None
+    messages: List[str] = Field(default_factory=list, sa_column=Column(JSON))
 
     @property
     def langchain_messages(self) -> List[AnyMessage]:
@@ -98,10 +99,10 @@ class SQLiteDatabase:
         SQLModel.metadata.create_all(self.engine)
 
     def create_table(self):
-        SQLModel.metadata.create_all(self.engine, tables=[self.model.__table__])
+        SQLModel.metadata.create_all(self.engine, tables=[cast(Any, self.model).__table__])
 
     def drop_table(self):
-        SQLModel.metadata.drop_all(self.engine, tables=[self.model.__table__])
+        SQLModel.metadata.drop_all(self.engine, tables=[cast(Any, self.model).__table__])
 
     def all(self) -> List[SQLModel]:
         with Session(self.engine) as session:

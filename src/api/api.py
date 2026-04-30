@@ -1,5 +1,5 @@
-from functools import lru_cache
 from pathlib import Path
+from typing import cast
 
 import gradio as gr
 from fastapi import FastAPI, Request
@@ -7,12 +7,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from dataset.vectorstore import VectorStoreDB, VectorStoreType
-from rag.chatbot.chatbot import answer_question,load_chatroom, save_history
-from rag.llm.embeddings import EmbeddingProvider, embedding_factory
-from settings.settings import EMBEDDING_MODEL, PERSIST_DIR, PROJECT_ROOT
-from dataset import documentDB
-from rag.chatbot.chatbot import load_chatroom, save_history, chatroomSQL, ChatroomModel
+from dataset import chatroomSQL
+from dataset.sql import ChatroomModel
+from rag.chatbot.chatbot import answer_question, load_chatroom
 import uuid
 
 APP_TITLE = "Corporation Law Vietnam RAG"
@@ -44,7 +41,7 @@ def create_gradio_app():
             # CHAT AREA
             with gr.Column(scale=4):
                 chat_title = gr.Markdown("### 🤖 Trợ lý Luật Doanh Nghiệp")
-                chatbot = gr.Chatbot(height=600, show_copy_button=True)
+                chatbot = gr.Chatbot(height=600)
                 
                 with gr.Row():
                     msg_input = gr.Textbox(
@@ -60,8 +57,7 @@ def create_gradio_app():
             return new_id, [], f"### 🟢 Phiên chat mới", ""
 
         def update_sidebar():
-            rooms = chatroomSQL.all()
-            # Trả về list tuple (id, name) cho Radio
+            rooms = cast(list[ChatroomModel], chatroomSQL.all())
             choices = [(room.roomId, room.name or room.roomId) for room in rooms]
             return gr.update(choices=choices)
 
@@ -95,30 +91,31 @@ def create_gradio_app():
         
         # Khi trang web load lần đầu
         demo.load(update_sidebar, outputs=chat_list)
-	return demo
+
+    return demo
 
 def create_app():
-	app = FastAPI(title=APP_TITLE)
-	app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app = FastAPI(title=APP_TITLE)
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-	@app.get("/", response_class=HTMLResponse)
-	def home(request: Request):
-		return templates.TemplateResponse(
-			request,
-			"index.html",
-			{
-				"request": request,
-				"app_title": APP_TITLE,
-				"gradio_path": GRADIO_PATH,
-			},
-		)
+    @app.get("/", response_class=HTMLResponse)
+    def home(request: Request):
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                "app_title": APP_TITLE,
+                "gradio_path": GRADIO_PATH,
+            },
+        )
 
-	return gr.mount_gradio_app(
-		app,
-		create_gradio_app(),
-		path=GRADIO_PATH,
-		footer_links=[],
-	)
+    return gr.mount_gradio_app(
+        app,
+        create_gradio_app(),
+        path=GRADIO_PATH,
+        footer_links=[],
+    )
 
 
 app = create_app()
