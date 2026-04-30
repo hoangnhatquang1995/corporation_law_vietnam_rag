@@ -4,6 +4,7 @@ from sqlmodel import select, Session, SQLModel, create_engine, Field
 from settings.types import VietnamLaw
 from pandas import DataFrame, Series, isna
 from langchain_core.messages import AnyMessage, HumanMessage, AIMessage
+import json
 
 class VietnamLawModel(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -33,16 +34,25 @@ class ChatroomModel(SQLModel, table = True):
         list_messages = []
         for message_str in self.messages:
             try:
-                message_dict = eval(message_str)
-                if isinstance(message_dict, dict) and "type" in message_dict and "content" in message_dict:
-                    content = message_dict["content"]
-                    if message_dict["type"] == "human":
+                message_dict = json.loads(message_str) 
+                if isinstance(message_dict, dict):
+                    content = message_dict.get("content", "")
+                    if message_dict.get("type") == "human":
                         list_messages.append(HumanMessage(content=content))
-                    elif message_dict["type"] == "ai":
+                    elif message_dict.get("type") == "ai":
                         list_messages.append(AIMessage(content=content))
             except Exception as exc:
-                print(f"Error parsing message: {message_str}, error: {exc}")
-                continue
+                try:
+                    message_dict = eval(message_str)
+                    if isinstance(message_dict, dict) and "type" in message_dict and "content" in message_dict:
+                        content = message_dict["content"]
+                        if message_dict["type"] == "human":
+                            list_messages.append(HumanMessage(content=content))
+                        elif message_dict["type"] == "ai":
+                            list_messages.append(AIMessage(content=content))
+                except Exception as exc:
+                    print(f"Error parsing message: {message_str}, error: {exc}")
+                    continue
         return list_messages
     
 SQLModelArgument = Union[SQLModel, Mapping[str,Any]]
