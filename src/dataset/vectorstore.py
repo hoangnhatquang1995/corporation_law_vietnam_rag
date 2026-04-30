@@ -55,6 +55,10 @@ class VectorStoreDB:
     def set_embedder(self, embedder: Embeddings):
         self.embedder = embedder
 
+    def _ensure_ready(self):
+        if self.db is None:
+            self.build()
+
     def build(self):
         if self.embedder is None:
             raise ValueError("[1][ERROR] Embedder phải được cung cấp để xây dựng vector store.")
@@ -88,6 +92,7 @@ class VectorStoreDB:
             raise ValueError(f"Unsupported vector store type: {self.type}")
                 
     def add(self, documents: List[Document], batch_size: Optional[int] = None, wait: Optional[bool] = None, timeout: Optional[int] = None):
+        self._ensure_ready()
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
         if self.type == VectorStoreType.QDRANT:
@@ -106,12 +111,14 @@ class VectorStoreDB:
         self.db.add_documents(documents)
         
     def query(self, query: str, top_k: int = 5) -> List[Document]:
+        self._ensure_ready()
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
         results = self.db.similarity_search( query, k=top_k )
         return results
 
     def delete(self, document_ids: List[str]):
+        self._ensure_ready()
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
         if self.name is None:
@@ -135,6 +142,7 @@ class VectorStoreDB:
             raise ValueError(f"Unsupported vector store type: {self.type}")
 
     def update(self, documents: List[Document]):
+        self._ensure_ready()
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
         if self.name is None:
@@ -168,6 +176,7 @@ class VectorStoreDB:
             raise ValueError(f"Unsupported vector store type: {self.type}")
 
     def as_retriver(self):
+        self._ensure_ready()
         if self.db is None:
             raise ValueError("[1][ERROR] DB Không được khởi tạo.")
         if self.type == VectorStoreType.QDRANT: 

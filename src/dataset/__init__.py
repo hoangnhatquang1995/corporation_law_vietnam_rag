@@ -17,8 +17,8 @@ documentDB = vectorstore.VectorStoreDB(
     ),
     path=str(PROJECT_ROOT / "db" / PERSIST_DIR),
 )
-documentDB.build()
 
 vietnamLawSql = sql.SQLiteDatabase(name="vietnam_laws.db", path=str(SQL_DIR), model=sql.VietnamLawModel)
 logEntrySql   = sql.SQLiteDatabase(name="log_entry.db", path=str(SQL_DIR), model=sql.LogEntryModel)
+chatroomSQL   = sql.SQLiteDatabase(name="chatroom", path=str(SQL_DIR), model=sql.ChatroomModel)
 

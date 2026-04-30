@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import select, Session, SQLModel, create_engine, Field
 from settings.types import VietnamLaw
 from pandas import DataFrame, Series, isna
+from langchain_core.messages import AnyMessage, HumanMessage, AIMessage
 
 class VietnamLawModel(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -22,6 +23,28 @@ class LogEntryModel(SQLModel, table=True):
     user_message: str
     bot_response: str
 
+class ChatroomModel(SQLModel, table = True):
+    roomId: str = Field(primary_key=True)
+    name: Optional[str] 
+    messages: List[str]
+
+    @property
+    def langchain_messages(self) -> List[AnyMessage]:
+        list_messages = []
+        for message_str in self.messages:
+            try:
+                message_dict = eval(message_str)
+                if isinstance(message_dict, dict) and "type" in message_dict and "content" in message_dict:
+                    content = message_dict["content"]
+                    if message_dict["type"] == "human":
+                        list_messages.append(HumanMessage(content=content))
+                    elif message_dict["type"] == "ai":
+                        list_messages.append(AIMessage(content=content))
+            except Exception as exc:
+                print(f"Error parsing message: {message_str}, error: {exc}")
+                continue
+        return list_messages
+    
 SQLModelArgument = Union[SQLModel, Mapping[str,Any]]
 
 class SQLiteDatabase:
@@ -70,6 +93,12 @@ class SQLiteDatabase:
     def drop_table(self):
         SQLModel.metadata.drop_all(self.engine, tables=[self.model.__table__])
 
+    def all(self) -> List[SQLModel]:
+        with Session(self.engine) as session:
+            statement = select(self.model)
+            results = session.exec(statement).all()
+            return [self.model.model_validate(result.model_dump()) for result in results]
+
     def add(self, law: SQLModelArgument):
         with Session(self.engine) as session:
             law_model = self.build_record(law, self.model)
@@ -116,5 +145,9 @@ class SQLiteDatabase:
                 session.add(law)
                 session.commit()
 
-        
+    def have_record(self, id) -> bool:
+        with Session(self.engine) as session:
+            law = session.get(self.model, id)
+            return law is not None
+          
     

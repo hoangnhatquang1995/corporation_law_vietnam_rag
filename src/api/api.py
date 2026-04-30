@@ -33,6 +33,7 @@ def create_gradio_app():
 			"Điều kiện chuyển nhượng phần vốn góp là gì?",
 		],
 		fill_height=True,
+		
 	)
 
 
