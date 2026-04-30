@@ -8,13 +8,14 @@ _required_consult_classifcation_tokenizer = None
 def get_required_consult_classification_model():
     global _required_consult_classifcation_model
     if _required_consult_classifcation_model is None:
-        _required_consult_classifcation_model = AutoModelForSequenceClassification.from_pretrained(REQUIRED_CONSULT_CLASSIFICATION_MODEL_DIR)
+        _required_consult_classifcation_model = AutoModelForSequenceClassification.from_pretrained("mrbut/cls-consulting-law-phoBERT") 
     return _required_consult_classifcation_model
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 def get_required_consult_classification_tokenizer():
     global _required_consult_classifcation_tokenizer
     if _required_consult_classifcation_tokenizer is None:
-        _required_consult_classifcation_tokenizer = AutoTokenizer.from_pretrained(REQUIRED_CONSULT_CLASSIFICATION_MODEL_DIR)
+        _required_consult_classifcation_tokenizer = AutoTokenizer.from_pretrained("mrbut/cls-consulting-law-phoBERT")
     return _required_consult_classifcation_tokenizer
 
 
