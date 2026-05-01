@@ -3,17 +3,21 @@ from typing import cast
 
 import gradio as gr
 from fastapi import FastAPI, Request
+from fastapi.responses import Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from dataset import chatroomSQL
 from dataset.sql import ChatroomModel
+from monitoring import get_metrics_content_type
+from monitoring import render_metrics
 from rag.chatbot.chatbot import answer_question, load_chatroom
 import uuid
 
 APP_TITLE = "Corporation Law Vietnam RAG"
 GRADIO_PATH = "/gradio"
+METRICS_PATH = "/metrics"
 COLLECTION_NAME = "corporation_law_vietnam"
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -109,6 +113,10 @@ def create_app():
                 "gradio_path": GRADIO_PATH,
             },
         )
+
+    @app.get(METRICS_PATH)
+    def metrics():
+        return Response(content=render_metrics(), media_type=get_metrics_content_type())
 
     return gr.mount_gradio_app(
         app,

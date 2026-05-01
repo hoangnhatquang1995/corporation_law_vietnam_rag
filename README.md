@@ -102,8 +102,30 @@ Sau đó mở:
 
 - `http://127.0.0.1:8000/`: trang HTML chính.
 - `http://127.0.0.1:8000/gradio`: giao diện Gradio độc lập.
+- `http://127.0.0.1:8000/metrics`: Prometheus metrics endpoint.
 
 Lưu ý: script hiện tại không bật auto-reload. Sau khi sửa code, bạn cần dừng và chạy lại tiến trình server.
+
+## Monitoring
+
+Repo hiện hỗ trợ monitoring theo stack phổ biến hơn:
+
+- Prometheus để scrape metrics từ `/metrics`
+- Grafana để dựng dashboard
+
+Stack monitoring nằm trong `ops/monitoring/`.
+
+Chạy nhanh:
+
+```powershell
+cd ops/monitoring
+docker compose up -d
+```
+
+Sau đó mở:
+
+- `http://localhost:9090`: Prometheus
+- `http://localhost:3000`: Grafana
 
 ## Chạy bằng Docker
 
