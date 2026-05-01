@@ -58,7 +58,7 @@ def create_gradio_app():
 
         def update_sidebar():
             rooms = cast(list[ChatroomModel], chatroomSQL.all())
-            choices = [(room.roomId, room.name or room.roomId) for room in rooms]
+            choices = [(room.name or room.roomId, room.roomId) for room in rooms]
             return gr.update(choices=choices)
 
         # 1. Bấm tạo chat mới

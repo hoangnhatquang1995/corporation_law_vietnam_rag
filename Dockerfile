@@ -7,9 +7,12 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
-COPY src/ ./src/
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel
+
+RUN pip install --no-cache-dir --index-url https://pypi.org/simple/ -r requirements.txt --default-timeout=100 -v 2>&1 | tail -100 || true
+
+COPY src/ ./src/
 
 EXPOSE 8000
 
